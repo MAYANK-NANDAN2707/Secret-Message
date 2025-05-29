@@ -1,10 +1,792 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Secret Message</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Messages</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animated Backgrounds */
+        .bg-encrypt {
+            background: linear-gradient(-45deg, #1a1a2e, #16213e, #0f3460, #533483);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        .bg-decrypt {
+            background: linear-gradient(-45deg, #0c4a6e, #075985, #0369a1, #0284c7);
+            background-size: 400% 400%;
+            animation: gradientShift 12s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 215, 0, 0.7);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+            box-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0px);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.3); }
+            to { text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 30px rgba(255,255,255,0.6); }
+        }
+
+        .mode-toggle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            padding: 12px 30px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-btn.active {
+            background: rgba(255, 215, 0, 0.2);
+            color: #FFD700;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+        }
+
+        .mode-btn:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1rem;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .input-field:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .key-input {
+            color: #FFD700 !important;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(45deg, #1e40af, #3b82f6, #06b6d4);
+            color: white;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn.processing {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .result-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+        }
+
+        .result-text {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .utility-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+        }
+
+        .utility-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .footer {
+            margin-top: auto;
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .creator-link {
+            color: #FFD700;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .creator-link:hover {
+            color: #FFF;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        /* Animation overlay */
+        .animation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .creator-animation {
+            text-align: center;
+            color: #FFD700;
+            font-size: 2.5rem;
+            font-weight: bold;
+            animation: subtleGlow 3s ease-in-out;
+            position: relative;
+        }
+
+        .creator-animation::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #FFD700, transparent);
+            animation: lineExpand 3s ease-in-out;
+        }
+
+        .creator-animation::after {
+            content: '✨';
+            position: absolute;
+            font-size: 1.5rem;
+            animation: sparkle 3s ease-in-out infinite;
+        }
+
+        @keyframes subtleGlow {
+            0% { 
+                transform: scale(0.8);
+                opacity: 0;
+                text-shadow: 0 0 20px #FFD700;
+            }
+            30% {
+                transform: scale(1.1);
+                opacity: 1;
+                text-shadow: 0 0 40px #FFD700, 0 0 80px #FFD700;
+            }
+            70% {
+                transform: scale(1);
+                opacity: 1;
+                text-shadow: 0 0 30px #FFD700, 0 0 60px #FFD700;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+                text-shadow: 0 0 25px #FFD700;
+            }
+        }
+
+        @keyframes lineExpand {
+            0% { width: 0; }
+            50% { width: 200px; }
+            100% { width: 0; }
+        }
+
+        @keyframes sparkle {
+            0%, 100% { 
+                top: -30px; 
+                left: 20%; 
+                opacity: 0;
+                transform: rotate(0deg);
+            }
+            25% { 
+                top: -40px; 
+                left: 80%; 
+                opacity: 1;
+                transform: rotate(90deg);
+            }
+            50% { 
+                top: 100%; 
+                left: 70%; 
+                opacity: 1;
+                transform: rotate(180deg);
+            }
+            75% { 
+                top: 110%; 
+                left: 30%; 
+                opacity: 1;
+                transform: rotate(270deg);
+            }
+        }
+
+        /* Success animation */
+        .success-animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            color: #00ff00;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+            animation: successPulse 2s ease-in-out;
+        }
+
+        @keyframes successPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .input-section {
+                padding: 20px;
+            }
+            
+            .mode-btn {
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+            
+            .creator-animation {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
 </head>
-<body>
-  <h1>Welcome to My Secret Message Site</h1>
-  <p>This page is now live through GitHub Pages!</p>
+<body class="bg-encrypt">
+    <!-- Animated particles -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Animation overlay -->
+    <div class="animation-overlay" id="animationOverlay">
+        <div class="creator-animation">
+            MAYANK NANDAN<br>
+            <div style="font-size: 1.2rem; margin-top: 15px; opacity: 0.8;">Creative Developer</div>
+        </div>
+    </div>
+    
+    <!-- Success animation -->
+    <div class="success-animation" id="successAnimation">
+        ✅ Success!
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Secret Messages</h1>
+            <p style="color: rgba(255,255,255,0.8); font-size: 1.2rem;">Secure Text Encryption & Decryption</p>
+        </div>
+
+        <div class="mode-toggle">
+            <button class="mode-btn active" onclick="switchMode('encrypt')">🔒 Encrypt</button>
+            <button class="mode-btn" onclick="switchMode('decrypt')">🔓 Decrypt</button>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label class="input-label" id="textLabel">Enter Text to Encrypt:</label>
+                <textarea class="input-field" id="inputText" rows="4" placeholder="Type your secret message here..."></textarea>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">Unique Key:</label>
+                <input type="text" class="input-field key-input" id="keyInput" placeholder="Enter your secret key...">
+            </div>
+            
+            <button class="action-btn" id="actionBtn" onclick="processText()">
+                🔒 ENCRYPT MESSAGE
+            </button>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <div class="input-group">
+                <label class="input-label" id="resultLabel">Encrypted Message:</label>
+                <div class="result-text" id="resultText"></div>
+            </div>
+            
+            <div class="button-group">
+                <button class="utility-btn" onclick="copyToClipboard()">📋 Copy</button>
+                <button class="utility-btn" onclick="downloadResult()">💾 Download</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Made and Owned by <a class="creator-link" onclick="showCreatorAnimation()">Mayank Nandan</a></p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        let currentMode = 'encrypt';
+        let resultData = '';
+
+        // Initialize particles
+        function createParticles() {
+            const particles = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                particles.appendChild(particle);
+            }
+        }
+
+        // Switch between encrypt and decrypt modes
+        function switchMode(mode) {
+            currentMode = mode;
+            const body = document.body;
+            const modeButtons = document.querySelectorAll('.mode-btn');
+            const textLabel = document.getElementById('textLabel');
+            const actionBtn = document.getElementById('actionBtn');
+            const resultSection = document.getElementById('resultSection');
+            
+            // Update active button
+            modeButtons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Change background
+            if (mode === 'encrypt') {
+                body.className = 'bg-encrypt';
+                textLabel.textContent = 'Enter Text to Encrypt:';
+                actionBtn.innerHTML = '🔒 ENCRYPT MESSAGE';
+            } else {
+                body.className = 'bg-decrypt';
+                textLabel.textContent = 'Enter Encrypted Text:';
+                actionBtn.innerHTML = '🔓 DECRYPT MESSAGE';
+            }
+            
+            // Hide result section
+            resultSection.style.display = 'none';
+            document.getElementById('inputText').value = '';
+            document.getElementById('keyInput').value = '';
+        }
+
+        // Advanced encryption function
+        function encryptText(text, key) {
+            try {
+                // Generate a random salt
+                const salt = CryptoJS.lib.WordArray.random(128/8);
+                
+                // Derive key using PBKDF2
+                const derivedKey = CryptoJS.PBKDF2(key, salt, {
+                    keySize: 256/32,
+                    iterations: 10000
+                });
+                
+                // Generate random IV
+                const iv = CryptoJS.lib.WordArray.random(128/8);
+                
+                // Encrypt the text
+                const encrypted = CryptoJS.AES.encrypt(text, derivedKey, {
+                    iv: iv,
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+                
+                // Combine salt, iv, and encrypted data
+                const combined = salt.concat(iv).concat(encrypted.ciphertext);
+                
+                // Convert to special symbols
+                return convertToSymbols(combined.toString(CryptoJS.enc.Base64));
+            } catch (error) {
+                throw new Error('Encryption failed: ' + error.message);
+            }
+        }
+
+        // Advanced decryption function
+        function decryptText(encryptedText, key) {
+            try {
+                // Convert symbols back to base64
+                const base64Data = convertFromSymbols(encryptedText);
+                
+                // Parse the combined data
+                const combined = CryptoJS.enc.Base64.parse(base64Data);
+                
+                // Extract salt (first 16 bytes)
+                const salt = CryptoJS.lib.WordArray.create(combined.words.slice(0, 4));
+                
+                // Extract IV (next 16 bytes)
+                const iv = CryptoJS.lib.WordArray.create(combined.words.slice(4, 8));
+                
+                // Extract encrypted data (remaining bytes)
+                const encrypted = CryptoJS.lib.WordArray.create(combined.words.slice(8));
+                
+                // Derive key using PBKDF2
+                const derivedKey = CryptoJS.PBKDF2(key, salt, {
+                    keySize: 256/32,
+                    iterations: 10000
+                });
+                
+                // Decrypt the text
+                const decrypted = CryptoJS.AES.decrypt(
+                    CryptoJS.lib.CipherParams.create({
+                        ciphertext: encrypted
+                    }), 
+                    derivedKey, 
+                    {
+                        iv: iv,
+                        mode: CryptoJS.mode.CBC,
+                        padding: CryptoJS.pad.Pkcs7
+                    }
+                );
+                
+                const result = decrypted.toString(CryptoJS.enc.Utf8);
+                if (!result) {
+                    throw new Error('Invalid key or corrupted data');
+                }
+                
+                return result;
+            } catch (error) {
+                throw new Error('Decryption failed: Invalid key or corrupted data');
+            }
+        }
+
+        // Convert text to symbols using proper base64 mapping
+        function convertToSymbols(base64Text) {
+            const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+            const symbols = '☀☁☂☃☄★☆☇☈☉☊☋☌☍☎☏☐☑☒☓☔☕☖☗☘☙☚☛☜☝☞☟☠☡☢☣☤☥☦☧☨☩☪☫☬☭☮☯☰☱☲☳☴☵☶☷☸☹☺☻☼☽☾☿♀♁♂♃♄♅♆♇♈♉♊♋♌♍♎♏';
+            
+            let result = '';
+            for (let i = 0; i < base64Text.length; i++) {
+                const char = base64Text[i];
+                const index = base64Chars.indexOf(char);
+                if (index !== -1) {
+                    result += symbols[index];
+                } else {
+                    result += char; // Keep any characters not in base64 as-is
+                }
+            }
+            
+            return result;
+        }
+
+        // Convert symbols back to base64
+        function convertFromSymbols(symbolText) {
+            const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+            const symbols = '☀☁☂☃☄★☆☇☈☉☊☋☌☍☎☏☐☑☒☓☔☕☖☗☘☙☚☛☜☝☞☟☠☡☢☣☤☥☦☧☨☩☪☫☬☭☮☯☰☱☲☳☴☵☶☷☸☹☺☻☼☽☾☿♀♁♂♃♄♅♆♇♈♉♊♋♌♍♎♏';
+            
+            let result = '';
+            for (let i = 0; i < symbolText.length; i++) {
+                const symbol = symbolText[i];
+                const index = symbols.indexOf(symbol);
+                if (index !== -1) {
+                    result += base64Chars[index];
+                } else {
+                    result += symbol; // Keep any characters not in symbols as-is
+                }
+            }
+            
+            return result;
+        }
+
+        // Main processing function
+        function processText() {
+            const inputText = document.getElementById('inputText').value.trim();
+            const keyInput = document.getElementById('keyInput').value.trim();
+            const actionBtn = document.getElementById('actionBtn');
+            const resultSection = document.getElementById('resultSection');
+            const resultText = document.getElementById('resultText');
+            const resultLabel = document.getElementById('resultLabel');
+            
+            if (!inputText || !keyInput) {
+                alert('Please enter both text and key!');
+                return;
+            }
+            
+            // Show processing animation
+            actionBtn.classList.add('processing');
+            actionBtn.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                try {
+                    if (currentMode === 'encrypt') {
+                        resultData = encryptText(inputText, keyInput);
+                        resultLabel.textContent = 'Encrypted Message:';
+                        showSuccess();
+                    } else {
+                        resultData = decryptText(inputText, keyInput);
+                        resultLabel.textContent = 'Decrypted Message:';
+                        showSuccess();
+                    }
+                    
+                    resultText.textContent = resultData;
+                    resultSection.style.display = 'block';
+                    
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                } finally {
+                    actionBtn.classList.remove('processing');
+                    actionBtn.style.pointerEvents = 'auto';
+                }
+            }, 1000);
+        }
+
+        // Show success animation
+        function showSuccess() {
+            const successAnim = document.getElementById('successAnimation');
+            successAnim.style.display = 'block';
+            setTimeout(() => {
+                successAnim.style.display = 'none';
+            }, 2000);
+        }
+
+        // Copy to clipboard
+        function copyToClipboard() {
+            if (!resultData) return;
+            
+            navigator.clipboard.writeText(resultData).then(() => {
+                showSuccess();
+            }).catch(() => {
+                alert('Failed to copy to clipboard');
+            });
+        }
+
+        // Download result - Fixed to properly create text file
+        function downloadResult() {
+            if (!resultData) return;
+            
+            try {
+                const blob = new Blob([resultData], { type: 'text/plain;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = currentMode === 'encrypt' ? 'encrypted_message.txt' : 'decrypted_message.txt';
+                
+                document.body.appendChild(a);
+                a.click();
+                
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+                
+                showSuccess();
+            } catch (error) {
+                console.error('Download failed:', error);
+                alert('Download failed. Please try copying the text instead.');
+            }
+        }
+
+        // Show creator animation
+        function showCreatorAnimation() {
+            const overlay = document.getElementById('animationOverlay');
+            overlay.style.display = 'flex';
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 4000);
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+        });
+
+        // Handle Enter key for inputs
+        document.getElementById('inputText').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                processText();
+            }
+        });
+
+        document.getElementById('keyInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                processText();
+            }
+        });
+    </script>
 </body>
 </html>
